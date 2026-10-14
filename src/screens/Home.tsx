@@ -64,7 +64,9 @@ export function Home({ nav }: { nav: Nav }) {
     <div className="screen home">
       <div className="home-head">
         <div>
-          <h1 className="hello">내소네 레시피북</h1>
+          <h1 className="hello">
+            <span className="title-emoji" aria-hidden>🌹</span> 내소네 레시피북 <span className="title-emoji" aria-hidden>🤍</span>
+          </h1>
         </div>
         <div className="streak" title="연속 학습일">
           <span className="streak-n">{s}</span>
