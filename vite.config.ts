@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
-        name: '팀버 레시피 외우기',
-        short_name: '레시피',
+        name: '내소네 레시피북',
+        short_name: '내소네 레시피북',
         description: '카페 레시피북 암기 앱',
         lang: 'ko',
         start_url: '.',
@@ -30,9 +30,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/npm\/pretendard.*/i,
             handler: 'CacheFirst',
-            options: { cacheName: 'google-fonts', expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 } }
+            options: { cacheName: 'fonts', expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 } }
           }
         ]
       }

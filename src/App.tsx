@@ -4,14 +4,21 @@ import { Home } from './screens/Home';
 import { BookList, FamilyView, RecipeDetail, RecipeEdit } from './screens/Book';
 import { Practice } from './screens/Practice';
 import { Settings } from './screens/Settings';
-import { Session, buildDailyQueue, newLeftToday, type QItem } from './screens/Session';
+import { Session, newLeftToday, type QItem } from './screens/Session';
+import { Play, type PlayMode } from './screens/Play';
+import { Rush } from './screens/Rush';
+import { dailyRound, extraRound, stageRound, type Round } from './lib/game';
+import type { Recipe } from './data/recipes';
+import type { Card } from './lib/srs';
+import type { LoadedState } from './lib/db';
 
 export type Route =
   | { name: 'home' }
   | { name: 'book' }
   | { name: 'practice' }
   | { name: 'settings' }
-  | { name: 'study' }
+  | { name: 'play'; mode: PlayMode; familyId?: string; k: number }
+  | { name: 'rush' }
   | { name: 'recipe'; id: string }
   | { name: 'edit'; id?: string }
   | { name: 'family'; id: string }
@@ -105,12 +112,26 @@ export default function App() {
         />
       );
       break;
-    case 'study': {
+    case 'play': {
       fullscreen = true;
-      const items = buildDailyQueue(store.recipes, store.cards, newLeftToday(store.meta));
-      body = <Session key="study" initial={items} title="오늘의 학습" onExit={back} />;
+      const replaceTop = (r: Route) => setStack((s) => [...s.slice(0, -1), r]);
+      body = (
+        <PlayRoute
+          key={route.k}
+          mode={route.mode}
+          familyId={route.familyId}
+          store={store}
+          onExit={back}
+          onMore={() => replaceTop({ name: 'play', mode: 'extra', k: Date.now() })}
+          onRush={() => replaceTop({ name: 'rush' })}
+        />
+      );
       break;
     }
+    case 'rush':
+      fullscreen = true;
+      body = <Rush onExit={back} />;
+      break;
     case 'practiceOne': {
       fullscreen = true;
       const items: QItem[] = [1, 2, 3].map((d) => ({ id: route.id, step: 'cloze', diff: d as 1 | 2 | 3 }));
@@ -141,4 +162,27 @@ export default function App() {
       )}
     </div>
   );
+}
+
+/** 판을 처음 열 때 한 번만 문제를 만들어요 */
+function PlayRoute(props: {
+  mode: PlayMode;
+  familyId?: string;
+  store: LoadedState;
+  onExit: () => void;
+  onMore: () => void;
+  onRush: () => void;
+}) {
+  const { mode, familyId, store } = props;
+  const [round] = useState<Round>(() => {
+    const recipes: Recipe[] = store.recipes;
+    const cards: Record<string, Card> = store.cards;
+    if (mode === 'stage' && familyId) return stageRound(familyId, recipes);
+    if (mode === 'daily') {
+      const r = dailyRound(recipes, cards, newLeftToday(store.meta));
+      if (r.items.length) return r;
+    }
+    return extraRound(recipes, cards, store.logs);
+  });
+  return <Play round={round} mode={mode} familyId={familyId} onExit={props.onExit} onMore={props.onMore} onRush={props.onRush} />;
 }

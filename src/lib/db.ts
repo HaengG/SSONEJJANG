@@ -12,7 +12,7 @@ export interface LogRec {
   recipeId: string;
   ts: number;
   rating: number;
-  mode: 'flash' | 'cloze';
+  mode: 'flash' | 'cloze' | 'game';
   wrong?: number;
   total?: number;
 }
@@ -28,6 +28,9 @@ export interface Meta {
   studyDays: string[]; // 'YYYY-MM-DD'
   introduced: { date: string; count: number };
   recipeOrder: string[];
+  xp: number;
+  stages: Record<string, { stars: number; plays: number }>;
+  rushBest: number;
 }
 
 export const DEFAULT_META: Meta = {
@@ -35,7 +38,10 @@ export const DEFAULT_META: Meta = {
   seedVersion: SEED_VERSION,
   studyDays: [],
   introduced: { date: '', count: 0 },
-  recipeOrder: RECIPES.map((r) => r.id)
+  recipeOrder: RECIPES.map((r) => r.id),
+  xp: 0,
+  stages: {},
+  rushBest: 0
 };
 
 export const today = (d = new Date()) => {
@@ -96,6 +102,9 @@ export async function loadAll(): Promise<LoadedState> {
     cardRecs = [...mem.cards.values()];
     logs = mem.logs;
   }
+
+  // 예전 버전 기록에 새 필드(xp, 스테이지 등)를 채워 넣어요
+  if (meta) meta = { ...DEFAULT_META, ...meta, settings: { ...DEFAULT_META.settings, ...meta.settings } };
 
   if (!meta || recipes.length === 0) {
     meta = { ...DEFAULT_META, studyDays: meta?.studyDays ?? [], settings: meta?.settings ?? DEFAULT_META.settings };
@@ -174,7 +183,7 @@ async function clearStores(names: string[]) {
 export async function resetProgress(recipes: Recipe[], meta: Meta) {
   await clearStores(['cards', 'logs']);
   for (const r of recipes) await putCard(r.id, newCard());
-  await putMeta({ ...meta, studyDays: [], introduced: { date: '', count: 0 } });
+  await putMeta({ ...meta, studyDays: [], introduced: { date: '', count: 0 }, xp: 0, stages: {}, rushBest: 0 });
 }
 
 /** 레시피를 원본(레시피북)으로 되돌리기. 학습 기록은 유지. */

@@ -5,7 +5,8 @@ import { level, LEVEL_NAMES, Rating, State } from '../lib/srs';
 import { today } from '../lib/db';
 import { fullName } from '../lib/recipe-utils';
 import { Bean } from '../components/ui';
-import { buildDailyQueue, newLeftToday } from './Session';
+import { newLeftToday } from './Session';
+import { rankOf, stageList } from '../lib/game';
 import type { Nav } from '../App';
 
 function streak(days: string[]): number {
@@ -31,10 +32,12 @@ export function Home({ nav }: { nav: Nav }) {
   const store = useStore();
   const { recipes, cards, meta, logs } = store;
 
-  const queue = useMemo(() => buildDailyQueue(recipes, cards, newLeftToday(meta)), [recipes, cards, meta]);
-  const reviewN = queue.filter((q) => q.step !== 'intro').length;
-  const newN = queue.filter((q) => q.step === 'intro').length;
-  const mins = Math.max(1, Math.round((reviewN * 25 + newN * 60) / 60));
+  const now = Date.now();
+  const reviewN = recipes.filter((r) => cards[r.id] && cards[r.id].state !== State.New && cards[r.id].due.getTime() <= now).length;
+  const newN = Math.min(newLeftToday(meta), recipes.filter((r) => !cards[r.id] || cards[r.id].state === State.New).length);
+  const dailyDone = reviewN === 0 && newN === 0;
+  const rank = rankOf(meta.xp);
+  const stages = useMemo(() => stageList(recipes, meta), [recipes, meta]);
 
   const mastered = recipes.filter((r) => level(cards[r.id]) >= 3).length;
   const started = recipes.filter((r) => cards[r.id] && cards[r.id].state !== State.New).length;
@@ -61,8 +64,7 @@ export function Home({ nav }: { nav: Nav }) {
     <div className="screen home">
       <div className="home-head">
         <div>
-          <div className="eyebrow">팀버 레시피</div>
-          <h1 className="hello">오늘도 한 잔씩 ☕</h1>
+          <h1 className="hello">내소네 레시피북</h1>
         </div>
         <div className="streak" title="연속 학습일">
           <span className="streak-n">{s}</span>
@@ -83,33 +85,78 @@ export function Home({ nav }: { nav: Nav }) {
         </div>
       )}
 
-      <section className="today-card">
-        <div className="today-nums">
-          <div>
-            <span className="big-n">{reviewN}</span>
-            <span className="lbl">복습</span>
-          </div>
-          <div>
-            <span className="big-n">{newN}</span>
-            <span className="lbl">새 메뉴</span>
-          </div>
-          <div>
-            <span className="big-n">{queue.length ? mins : 0}</span>
-            <span className="lbl">분 예상</span>
-          </div>
+      <section className="rank-card">
+        <div className="rank-top">
+          <span className="rank-name">☕ {rank.name}</span>
+          <span className="muted small">{meta.xp} XP</span>
         </div>
-        {queue.length ? (
-          <button className="btn primary big full" onClick={() => nav({ name: 'study' })}>
-            오늘의 학습 시작
-          </button>
-        ) : (
-          <div className="all-done">
-            오늘 할 건 다 했어요 🎉
-            <button className="btn ghost" onClick={() => nav({ name: 'practice' })}>
-              연습실 가기
+        <div className="bar xp">
+          <div style={{ width: `${rank.progress * 100}%` }} />
+        </div>
+        <div className="muted small">{rank.next ? `${rank.next}까지 ${rank.toNext} XP` : '최고 등급 달성!'}</div>
+      </section>
+
+      <section className="today-card">
+        <div className="today-title">오늘의 주문</div>
+        {!dailyDone ? (
+          <>
+            <div className="today-nums">
+              <div>
+                <span className="big-n">{reviewN}</span>
+                <span className="lbl">복습 메뉴</span>
+              </div>
+              <div>
+                <span className="big-n">{newN}</span>
+                <span className="lbl">새 메뉴</span>
+              </div>
+            </div>
+            <button className="btn primary big full" onClick={() => nav({ name: 'play', mode: 'daily', k: Date.now() })}>
+              주문 받기 ▶
             </button>
-          </div>
+          </>
+        ) : (
+          <>
+            <p className="today-done">오늘 몫은 다 했어요 🎉<br /><span className="muted small">더 하고 싶으면 계속할 수 있어요</span></p>
+            <button className="btn primary big full" onClick={() => nav({ name: 'play', mode: 'extra', k: Date.now() })}>
+              한 판 더 ▶
+            </button>
+          </>
         )}
+        <button className="btn full rush-btn" onClick={() => nav({ name: 'rush' })}>
+          ⏱ 주문 러시 60초 <span className="muted small">최고 {meta.rushBest}개</span>
+        </button>
+      </section>
+
+      <section className="panel">
+        <div className="panel-head">
+          <h2>스테이지</h2>
+          <span className="muted">
+            ★ {stages.reduce((a, s) => a + s.stars, 0)} / {stages.length * 3}
+          </span>
+        </div>
+        <ol className="stage-path">
+          {stages.map((s, i) => (
+            <li key={s.family.id} className={`stage ${s.unlocked ? '' : 'locked'} ${s.stars ? 'cleared' : ''}`} style={{ ['--i' as any]: i % 4 }}>
+              <button
+                className="stage-btn"
+                disabled={!s.unlocked}
+                onClick={() => nav({ name: 'play', mode: 'stage', familyId: s.family.id, k: Date.now() })}
+              >
+                <span className="stage-no">{s.unlocked ? i + 1 : '🔒'}</span>
+                <span className="stage-info">
+                  <b>{s.family.name}</b>
+                  <span className="stage-stars">
+                    {[1, 2, 3].map((n) => (
+                      <i key={n} className={n <= s.stars ? 'on' : ''}>★</i>
+                    ))}
+                    <span className="muted small"> · 메뉴 {s.count}</span>
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+        <p className="hint">스테이지를 깨면(별 1개 이상) 다음 스테이지가 열려요.</p>
       </section>
 
       <section className="panel">

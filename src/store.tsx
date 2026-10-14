@@ -12,6 +12,14 @@ interface Store extends db.LoadedState {
   removeRecipe: (id: string) => Promise<void>;
   updateSettings: (s: Partial<db.Settings>) => Promise<void>;
   reload: () => Promise<void>;
+  finishGame: (r: GameResult) => Promise<void>;
+}
+
+export interface GameResult {
+  ratings: { recipeId: string; grade: Grade; wrong: number; total: number }[];
+  xp: number;
+  stage?: { familyId: string; stars: number };
+  rushScore?: number;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -91,8 +99,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await setMeta({ ...state.meta, settings: { ...state.meta.settings, ...patch } });
   };
 
+  const finishGame: Store['finishGame'] = async ({ ratings, xp, stage, rushScore }) => {
+    const cards = { ...state.cards };
+    const newLogs: db.LogRec[] = [];
+    for (const r of ratings) {
+      const next = review(cards[r.recipeId] ?? newCard(), r.grade);
+      cards[r.recipeId] = next;
+      await db.putCard(r.recipeId, next);
+      newLogs.push(await db.addLog({ recipeId: r.recipeId, ts: Date.now(), rating: r.grade, mode: 'game', wrong: r.wrong, total: r.total }));
+    }
+    const t = db.today();
+    const m = state.meta;
+    const played = ratings.length > 0 || (rushScore ?? 0) > 0;
+    const meta: db.Meta = {
+      ...m,
+      xp: m.xp + xp,
+      studyDays: played && !m.studyDays.includes(t) ? [...m.studyDays, t].slice(-400) : m.studyDays,
+      stages: stage
+        ? {
+            ...m.stages,
+            [stage.familyId]: {
+              stars: Math.max(stage.stars, m.stages[stage.familyId]?.stars ?? 0),
+              plays: (m.stages[stage.familyId]?.plays ?? 0) + 1
+            }
+          }
+        : m.stages,
+      rushBest: Math.max(m.rushBest, rushScore ?? 0)
+    };
+    await db.putMeta(meta);
+    setState((s) => ({ ...s, cards, meta, logs: [...s.logs, ...newLogs] }));
+  };
+
   const value = useMemo<Store>(
-    () => ({ ...state, ready, persistent, rate, markIntroduced, saveRecipe, removeRecipe, updateSettings, reload }),
+    () => ({ ...state, ready, persistent, rate, markIntroduced, saveRecipe, removeRecipe, updateSettings, reload, finishGame }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state, ready, persistent]
   );

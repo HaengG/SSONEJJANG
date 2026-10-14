@@ -114,7 +114,7 @@ export function Settings() {
           <li>사파리로 이 앱 주소를 열어요</li>
           <li>아래쪽 <b>공유 버튼(□↑)</b>을 눌러요</li>
           <li><b>홈 화면에 추가</b>를 눌러요</li>
-          <li>홈 화면의 "레시피" 아이콘으로 열면 끝!</li>
+          <li>홈 화면의 "내소네 레시피북" 아이콘으로 열면 끝!</li>
         </ol>
       </section>
 
@@ -131,7 +131,7 @@ export function Settings() {
       </section>
 
       {msg && <div className="toast" onClick={() => setMsg('')}>{msg}</div>}
-      <p className="muted center small">팀버 레시피 외우기 v0.1</p>
+      <p className="muted center small">내소네 레시피북 v0.2</p>
     </div>
   );
 }
