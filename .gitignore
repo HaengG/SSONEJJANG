@@ -2,3 +2,5 @@ node_modules
 dist
 *.log
 .DS_Store
+# 레시피북 원본 사진 (용량이 크고 원본 보관용이라 저장소에서 제외)
+레시피/
