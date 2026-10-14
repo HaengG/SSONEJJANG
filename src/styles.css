@@ -1,14 +1,14 @@
 /* ───────── 토큰: 메인 회색 · 포인트 보라 · 보조(로즈·민트·옐로·핫/아이스) ───────── */
 :root {
-  --paper: #f1f1f4;
-  --card: #ffffff;
-  --ink: #2d2a33;
-  --ink-soft: #55505e;
-  --muted: #8b8694;
-  --line: #dddbe2;
-  --accent: #7b4fd8;
+  --paper: #d5d4da;
+  --card: #f4f4f6;
+  --ink: #1d1a22;
+  --ink-soft: #423d49;
+  --muted: #66616f;
+  --line: #bdbbc5;
+  --accent: #5a2bb5;
   --accent-ink: #ffffff;
-  --accent-soft: #ece5fb;
+  --accent-soft: #cfbdf3;
   --rose: #e5607f;
   --rose-soft: #fde7ec;
   --mint: #2a9d78;
@@ -24,11 +24,11 @@
   --bad: #d9465a;
   --bad-soft: #fbe1e4;
   --lv0: #e4e2e8;
-  --lv1: #d9cdf6;
-  --lv2: #b9a2ef;
-  --lv3: #9a76e4;
-  --lv4: #7b4fd8;
-  --lv5: #4f2c9e;
+  --lv1: #bea9ef;
+  --lv2: #9673e3;
+  --lv3: #7647d4;
+  --lv4: #5a2bb5;
+  --lv5: #3a1b7d;
   --radius: 16px;
   --shadow: 3px 3px 0 var(--ink);
   --font-hand: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', system-ui, sans-serif;
@@ -410,7 +410,7 @@ textarea { resize: vertical; line-height: 1.5; }
 .opt.ox { font-size: 40px; min-height: 96px; }
 .opt.ox.o { color: var(--ice); }
 .opt.ox.x { color: var(--hot); }
-.xp-pop { position: fixed; left: 50%; top: 38%; transform: translateX(-50%); font-weight: 900; font-size: 26px; color: var(--ok); pointer-events: none; animation: floatUp 0.75s ease-out forwards; z-index: 30; }
+.xp-pop { position: fixed; left: 50%; top: 12%; transform: translateX(-50%); font-weight: 900; font-size: 26px; color: var(--ok); pointer-events: none; animation: floatUp 0.75s ease-out forwards; z-index: 30; }
 .wrong-box { background: var(--bad-soft); border: 2px solid var(--bad); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 8px; animation: slideIn 0.2s; }
 .wrong-title { font-weight: 800; font-size: 18px; color: var(--bad); }
 .wrong-box details summary { cursor: pointer; font-weight: 700; font-size: 14px; padding: 4px 0; }
